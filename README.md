@@ -13,8 +13,10 @@
 
 FreshMart features a premium, Apple-inspired glassmorphic dashboard architecture with smooth interactive slides, responsive layouts, and rich hover states modeled after the high-end *Grocery Mania v2* storefront.
 
-### 🛒 image 4: Customer Storefront View
-Experience a stunning customer storefront featuring dynamic hero sliders, category scrolls, promotional deals, and real-time product catalogs—loaded purely from database records.
+---
+
+### 🛒 Customer Storefront
+Experience a stunning customer storefront featuring dynamic hero sliders, category scrolls, promotional deals, and real-time product catalogs — loaded purely from database records.
 
 <p align="center">
   <img src="docs/assets/customer_storefront.png" alt="FreshMart Customer Storefront" width="95%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);" />
@@ -22,7 +24,7 @@ Experience a stunning customer storefront featuring dynamic hero sliders, catego
 
 ---
 
-### 👑 image 1: Admin Dashboard View
+### 👑 Admin Dashboard
 An immersive, role-protected dashboard for admins (such as Super-Admin `Sankalp Swarup`) featuring live financial analytics, low-stock warnings, upcoming product expiry reports, and active cashier shifts.
 
 <p align="center">
@@ -31,7 +33,7 @@ An immersive, role-protected dashboard for admins (such as Super-Admin `Sankalp 
 
 ---
 
-### 📈 image 2: Manager Analytics View
+### 📈 Manager Analytics
 Dedicated access panel for store managers with integrated high-fidelity charts detailing sales revenue trends, overall profits, daily order counts, and top performing products.
 
 <p align="center">
@@ -40,8 +42,8 @@ Dedicated access panel for store managers with integrated high-fidelity charts d
 
 ---
 
-### 💸 image 3: Cashier Dashboard View
-A high-performance cashier operational dashboard supporting quick Point of Sale (POS) checkouts, real-time inventories status, low stock alarms, and customer cart registries.
+### 💸 Cashier Dashboard
+A high-performance cashier operational dashboard supporting quick Point of Sale (POS) checkouts, real-time inventory status, low-stock alarms, and customer cart registries.
 
 <p align="center">
   <img src="docs/assets/cashier_dashboard.png" alt="Cashier Operations Dashboard" width="95%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);" />
@@ -64,16 +66,18 @@ A high-performance cashier operational dashboard supporting quick Point of Sale 
 ### 3. **Smart Logistics & Inventory**
 *   **Point of Sale (POS)**: Real-time price calculation from weight scale payloads and direct item lookups.
 *   **Low Stock & Expiry Alerts**: Automatically triggers system alerts when inventories fall below critical thresholds or products are near their expiry dates.
-*   **Loyalty points & Rewards**: Accumulates dynamic points and scales loyalty tiers (Bronze, Silver, Gold, Platinum).
+*   **Loyalty Points & Rewards**: Accumulates dynamic points and scales loyalty tiers (Bronze, Silver, Gold, Platinum).
 
 ---
 
 ## 💻 Tech Stack
 
-*   **Backend Engine**: FastAPI (Asynchronous Python REST API), Uvicorn.
-*   **Data Tier**: SQLite, SQLAlchemy ORM (WAL mode enabled for concurrent writes, foreign key cascade deletion).
-*   **Security Stack**: Python-Jose (signature JWTs), Native Bcrypt.
-*   **Frontend UI**: HTML5, Alpine.js (Reactive client-side routing), Tailwind CSS (Premium Glassmorphic styles).
+| Layer | Technology |
+|---|---|
+| **Backend Engine** | FastAPI (Async Python REST API), Uvicorn |
+| **Data Tier** | SQLite, SQLAlchemy ORM (WAL mode, FK cascade) |
+| **Security Stack** | Python-Jose (JWT), Native Bcrypt (Passlib) |
+| **Frontend UI** | HTML5, Alpine.js (reactive routing), Tailwind CSS |
 
 ---
 
@@ -84,6 +88,7 @@ A high-performance cashier operational dashboard supporting quick Point of Sale 
 *   Git
 
 ### Installation & Launch
+
 1.  **Clone the Repository**:
     ```bash
     git clone https://github.com/Sankalp28Roop/Grocery-Store-Management-System-.git
@@ -102,12 +107,17 @@ A high-performance cashier operational dashboard supporting quick Point of Sale 
     *   **Main Application**: `http://127.0.0.1:8000`
     *   **OpenAPI Swagger Docs**: `http://127.0.0.1:8000/docs`
 
+---
+
 ### 🔑 Seeded Authentication Accounts
 You can immediately sign in or use the quick demo shortcut buttons on the Login page:
-*   **Super-Administrator**: `sankalp.swarup@grocerymania.local` / `admin123`
-*   **Manager**: `manager@freshmart.com` / `manager123`
-*   **Cashier**: `cashier@freshmart.com` / `cashier123`
-*   **Customer**: `emma@example.com` / `customer123`
+
+| Role | Email | Password |
+|---|---|---|
+| **Super-Administrator** | `sankalp.swarup@grocerymania.local` | `admin123` |
+| **Manager** | `manager@freshmart.com` | `manager123` |
+| **Cashier** | `cashier@freshmart.com` | `cashier123` |
+| **Customer** | `emma@example.com` | `customer123` |
 
 ---
 
@@ -115,7 +125,7 @@ You can immediately sign in or use the quick demo shortcut buttons on the Login 
 
 ```text
 ├── backend/
-│   ├── routers/          # Modular API routers (auth, pos, warehouse, chatbot)
+│   ├── routers/          # Modular API routers (auth, pos, warehouse, chatbot, storefront)
 │   ├── auth.py           # Native bcrypt hashing & signed JWT token factory
 │   ├── database.py       # Asynchronous seeding engine & session managers
 │   ├── models.py         # SQLAlchemy relational database ORM schemas
@@ -125,6 +135,8 @@ You can immediately sign in or use the quick demo shortcut buttons on the Login 
 │   ├── css/              # App stylesheets & storefront layout adapters
 │   ├── js/               # Interactive Alpine.js controller frameworks
 │   └── index.html        # Single-page dashboard viewport
+├── docs/
+│   └── assets/           # Interface screenshots for documentation
 └── start.sh              # Unified local environment launcher script
 ```
 
