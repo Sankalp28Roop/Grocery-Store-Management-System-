@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreshMart — Grocery Store Management System</title>
+  <meta name="description" content="Enterprise-grade grocery store management platform with POS, inventory, analytics, supplier management, and more." />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/app.css?v=2" />
+
+  <!-- Module scripts -->
+  <script src="/js/utils.js?v=2"></script>
+  <script src="/js/app.js?v=2"></script>
+  <script src="/js/auth.js?v=2"></script>
+  <script src="/js/dashboard.js?v=2"></script>
+  <script src="/js/products.js?v=2"></script>
+  <script src="/js/pos.js?v=2"></script>
+  <script src="/js/reports.js?v=2"></script>
+  <script src="/js/suppliers.js?v=2"></script>
+  <script src="/js/warehouse.js?v=2"></script>
+  <script src="/js/employees.js?v=2"></script>
+  <script src="/js/chatbot.js?v=2"></script>
+  <script src="/js/storefront.js?v=2"></script>
+</head>
+<body x-data x-init="$store.app.init()">
+
+<!-- ════════════════════════════════════════════════════════════════════
+     AUTH SCREEN
+═════════════════════════════════════════════════════════════════════ -->
+<div id="auth-screen" x-show="!$store.app.isAuthenticated" x-cloak>
+  <div class="auth-card" x-data="authComponent()">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"/>
+      </svg>
+    </div>
+
+    <h1 style="font-size:1.75rem;margin-bottom:.5rem">FreshMart</h1>
+    <p style="margin-bottom:2rem;font-size:.9375rem">Grocery Store Management System</p>
+
+    <!-- Tab bar -->
+    <div class="auth-tab-bar">
+      <button class="auth-tab" :class="{active: mode==='login'}" @click="mode='login'; error=null">Sign In</button>
+      <button class="auth-tab" :class="{active: mode==='register'}" @click="mode='register'; error=null">Register</button>
+    </div>
+
+    <!-- Error -->
+    <div x-show="error" class="mb-4 p-3 rounded-xl text-sm font-medium" style="background:var(--c-danger-light);color:var(--c-danger)" x-text="error"></div>
+
+    <!-- Login Form -->
+    <form x-show="mode==='login'" @submit.prevent="login()" style="display:flex;flex-direction:column;gap:0">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" x-model="loginEmail" placeholder="you@freshmart.com" id="login-email" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" x-model="loginPassword" placeholder="••••••••" id="login-password" autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg" :disabled="loading" id="login-submit">
+        <span x-show="loading" class="spinner"></span>
+        <span x-text="loading ? 'Signing in…' : 'Sign In'"></span>
+      </button>
+    </form>
+
+    <!-- Register Form -->
+    <form x-show="mode==='register'" @submit.prevent="register()" style="display:flex;flex-direction:column;gap:0">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" x-model="regName" placeholder="Jane Smith" id="reg-name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" x-model="regEmail" placeholder="jane@example.com" id="reg-email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" x-model="regPassword" placeholder="Min. 6 characters" id="reg-password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg" :disabled="loading" id="reg-submit">
+        <span x-show="loading" class="spinner"></span>
+        <span x-text="loading ? 'Creating account…' : 'Create Account'"></span>
+      </button>
+    </form>
+
+    <!-- Quick login shortcuts -->
+    <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--c-border)" x-show="mode==='login'">
+      <p style="font-size:.75rem;font-weight:600;color:var(--c-text-tertiary);text-align:center;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.875rem">Quick demo access</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <button class="btn btn-secondary btn-sm" @click="quickLogin('admin')" id="quick-admin">👑 Admin</button>
+        <button class="btn btn-secondary btn-sm" @click="quickLogin('manager')" id="quick-manager">📊 Manager</button>
+        <button class="btn btn-secondary btn-sm" @click="quickLogin('cashier')" id="quick-cashier">💳 Cashier</button>
+        <button class="btn btn-secondary btn-sm" @click="quickLogin('customer')" id="quick-customer">🛒 Customer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     MAIN APP LAYOUT
+═════════════════════════════════════════════════════════════════════ -->
+<div id="app-layout" x-show="$store.app.isAuthenticated" x-cloak>
+
+  <!-- ─── SIDEBAR ──────────────────────────────────────────────────── -->
+  <aside id="sidebar" :class="{open: $store.app.sidebarOpen}">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"/>
+        </svg>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="sidebar-logo-name">FreshMart</span>
+        <span class="sidebar-logo-tagline">Store Management</span>
+      </div>
+    </div>
+
+    <!-- Main navigation -->
+    <div class="sidebar-section-label">Main</div>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='storefront'}" @click="$store.app.navigate('storefront')" id="nav-storefront">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Storefront
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='dashboard'}" @click="$store.app.navigate('dashboard')" id="nav-dashboard" x-show="!$store.app.hasRole('customer')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='products'}" @click="$store.app.navigate('products')" id="nav-products">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0v10l-8 4M4 7v10l8 4"/></svg>
+      Products
+      <span class="nav-badge" x-show="$store.app.notificationCount > 0" x-text="$store.app.notificationCount" style="background:var(--c-warning);color:#1c1c1e"></span>
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='pos'}" @click="$store.app.navigate('pos')" id="nav-pos">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13M7 13h10"/></svg>
+      Point of Sale
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='reports'}" @click="$store.app.navigate('reports')" id="nav-reports" x-show="$store.app.hasRole('admin','manager')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Analytics
+    </button>
+
+    <!-- Operations -->
+    <div class="sidebar-section-label" x-show="$store.app.hasRole('admin','manager')">Operations</div>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='suppliers'}" @click="$store.app.navigate('suppliers')" id="nav-suppliers" x-show="$store.app.hasRole('admin','manager')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Suppliers & POs
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='warehouse'}" @click="$store.app.navigate('warehouse')" id="nav-warehouse" x-show="$store.app.hasRole('admin','manager')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Warehouse
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='employees'}" @click="$store.app.navigate('employees')" id="nav-employees" x-show="$store.app.hasRole('admin','manager')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Employees
+    </button>
+
+    <button class="nav-item" :class="{active: $store.app.activePage==='forecast'}" @click="$store.app.navigate('forecast')" id="nav-forecast" x-show="$store.app.hasRole('admin','manager')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      Forecasting
+    </button>
+
+    <!-- Customer section -->
+    <div class="sidebar-section-label" x-show="$store.app.hasRole('customer')">My Account</div>
+    <button class="nav-item" :class="{active: $store.app.activePage==='loyalty'}" @click="$store.app.navigate('loyalty')" id="nav-loyalty" x-show="$store.app.hasRole('customer')">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+      Loyalty & Rewards
+    </button>
+
+    <!-- User profile area -->
+    <div class="sidebar-bottom">
+      <div style="display:flex;align-items:center;gap:.875rem;padding:.5rem;border-radius:12px;transition:background var(--t-base);" @mouseover="$el.style.background='rgba(255,255,255,0.07)'" @mouseout="$el.style.background='transparent'">
+        <div class="user-avatar" x-text="fmt.initials($store.app.currentUser?.name || '')"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.875rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="$store.app.currentUser?.name"></div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,0.4);text-transform:capitalize" x-text="$store.app.currentUser?.role"></div>
+        </div>
+        <button class="btn btn-ghost btn-icon" @click="$store.app.logout()" title="Sign out" style="color:rgba(255,255,255,0.4)" id="logout-btn">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN CONTENT ─────────────────────────────────────────────── -->
+  <main id="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <!-- Mobile hamburger -->
+      <button class="btn btn-ghost btn-icon" style="display:none" @click="$store.app.sidebarOpen = !$store.app.sidebarOpen" id="mobile-menu-btn">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <span class="topbar-title" x-text="{storefront:'Storefront',dashboard:'Dashboard',products:'Products',pos:'Point of Sale',reports:'Analytics',suppliers:'Suppliers & Procurement',warehouse:'Warehouse',employees:'Employees',forecast:'Demand Forecasting',loyalty:'Loyalty & Rewards',users:'User Management'}[$store.app.activePage] || 'FreshMart'"></span>
+
+      <!-- Global search -->
+      <div class="search-bar">
+        <svg class="search-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        <input type="search" placeholder="Search products, orders, suppliers…" id="global-search" />
+      </div>
+
+      <!-- Spacer -->
+      <div style="flex:1"></div>
+
+      <!-- Cart button -->
+      <button class="btn btn-secondary" style="position:relative;gap:.5rem" @click="$store.app.cartOpen = true" id="cart-btn">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13M7 13h10"/></svg>
+        <span x-text="$store.app.cartCount > 0 ? `Cart (${$store.app.cartCount})` : 'Cart'"></span>
+        <span x-show="$store.app.cartCount > 0" class="nav-badge" x-text="$store.app.cartCount" style="position:absolute;top:-8px;right:-8px;background:var(--c-brand)"></span>
+      </button>
+
+      <!-- Notification bell -->
+      <button class="notif-bell btn btn-ghost btn-icon" @click="$store.app.showNotifPanel = !$store.app.showNotifPanel" id="notif-btn">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-count" x-show="$store.app.notificationCount > 0" x-text="$store.app.notificationCount"></span>
+      </button>
+
+      <!-- Notification panel -->
+      <div x-show="$store.app.showNotifPanel" @click.outside="$store.app.showNotifPanel = false" style="position:absolute;top:72px;right:1rem;width:340px;background:var(--c-surface);border-radius:16px;box-shadow:var(--shadow-lg);border:1px solid var(--c-border);z-index:999;overflow:hidden">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between">
+          <h4 style="font-size:.9375rem">Notifications</h4>
+          <span style="font-size:.75rem;color:var(--c-text-tertiary)" x-text="`${$store.app.notificationCount} unread`"></span>
+        </div>
+        <div style="max-height:320px;overflow-y:auto">
+          <template x-if="$store.app.notifications.length === 0">
+            <div class="empty-state" style="padding:2rem">
+              <div class="empty-state-icon">🔔</div>
+              <p>No new notifications</p>
+            </div>
+          </template>
+          <template x-for="n in $store.app.notifications" :key="n.id">
+            <div style="padding:.875rem 1.25rem;border-bottom:1px solid var(--c-border-2);cursor:pointer;transition:background var(--t-fast)" :style="n.is_read ? '' : 'background:var(--c-brand-light)'" @click="$store.app.markRead(n.id)">
+              <div style="font-size:.8125rem;font-weight:600;color:var(--c-text-primary);margin-bottom:.2rem" x-text="n.message"></div>
+              <div style="font-size:.6875rem;color:var(--c-text-tertiary)" x-text="fmt.relativeDate(n.created_at)"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </header>
+
+    <!-- ─── PAGE VIEWS ─────────────────────────────────────────────── -->
+    <div class="page-content">
+
+      <!-- ══ STOREFRONT ══════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'storefront'" x-data="storefrontComponent()" x-init="init()" class="storefront-container" style="display:flex;flex-direction:column;gap:2.5rem;padding-bottom:4rem" x-cloak>
+        
+        <!-- HERO CAROUSEL SKELETON -->
+        <div x-show="loading" class="skeleton" style="height:380px;border-radius:24px;width:100%"></div>
+
+        <!-- HERO CAROUSEL -->
+        <div x-show="!loading" class="hero-slider">
+          <template x-for="(slide, idx) in slides" :key="idx">
+            <div x-show="activeSlide === idx" 
+                 class="hero-slide" 
+                 :style="`background:${slide.bgGradient}`">
+              
+              <!-- Content -->
+              <div class="hero-slide-content">
+                <span class="hero-slide-tag" x-text="slide.tag"></span>
+                <h1 class="hero-slide-title" x-text="slide.title"></h1>
+                <p class="hero-slide-subtitle" x-text="slide.subtitle"></p>
+                <button class="btn btn-lg" style="background:white;color:var(--c-brand);margin-top:1rem;font-weight:800;border-radius:14px;box-shadow:var(--shadow-sm)" @click="selectCategory(slide.category); document.getElementById('storefront-catalog-title').scrollIntoView({behavior:'smooth'})" x-text="slide.buttonText"></button>
+              </div>
+              
+              <!-- Image Overlay -->
+              <div class="hero-slide-image-wrap">
+                <img class="hero-slide-image" :src="slide.image" alt="Promo Image" />
+              </div>
+            </div>
+          </template>
+          
+          <!-- Arrows -->
+          <button @click="prevSlide()" class="hero-arrow-btn prev">‹</button>
+          <button @click="nextSlide()" class="hero-arrow-btn next">›</button>
+          
+          <!-- Dots -->
+          <div style="position:absolute;bottom:1.25rem;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:0.5rem">
+            <template x-for="(s, idx) in slides" :key="idx">
+              <button @click="stopSlider(); activeSlide=idx; startSlider()" 
+                      style="width:10px;height:10px;border-radius:50%;border:none;cursor:pointer;transition:all 0.25s"
+                      :style="activeSlide === idx ? 'background:white;transform:scale(1.2)' : 'background:rgba(255,255,255,0.4)'"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- CATEGORIES QUICK SCROLL -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <h3 style="font-weight:800;letter-spacing:-0.02em">Browse Categories</h3>
+          <div class="category-scroll-bar" style="display:flex;gap:1rem;overflow-x:auto;padding-bottom:0.5rem;scroll-behavior:smooth">
+            <button class="category-scroll-item" 
+                    :class="{active: selectedCategory===''}" 
+                    @click="selectedCategory=''; loadProducts()"
+                    style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.5rem;border-radius:50px;font-weight:700;font-size:0.875rem;background:var(--c-surface);border:1px solid var(--c-border);cursor:pointer;transition:all 0.25s">
+              <span>🛒</span> All Categories
+            </button>
+            <template x-for="cat in categories" :key="cat">
+              <button class="category-scroll-item" 
+                      :class="{active: selectedCategory===cat}" 
+                      @click="selectCategory(cat)"
+                      style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.5rem;border-radius:50px;font-weight:700;font-size:0.875rem;background:var(--c-surface);border:1px solid var(--c-border);cursor:pointer;transition:all 0.25s;white-space:nowrap"
+                      :style="selectedCategory===cat ? 'background:var(--c-brand);color:white;border-color:var(--c-brand)' : ''">
+                <span x-text="fmt.categoryEmoji(cat)"></span>
+                <span x-text="cat"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- PROMO BANNERS SKELETON -->
+        <div x-show="loading" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+          <div class="skeleton" style="height:120px;border-radius:24px"></div>
+          <div class="skeleton" style="height:120px;border-radius:24px"></div>
+        </div>
+
+        <!-- PROMOTIONAL DEALS GRID -->
+        <div x-show="!loading" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+          <template x-for="promo in promos" :key="promo.title">
+            <div class="promo-banner-card" 
+                 :style="`background:${promo.bg};color:${promo.color};display:flex;justify-content:space-between;align-items:center;padding:1.75rem 2.25rem;border-radius:24px;border:1px solid rgba(0,0,0,0.03)`"
+                 style="box-shadow:var(--shadow-sm);transition:transform 0.25s;cursor:pointer"
+                 @click="promo.category ? selectCategory(promo.category) : $store.app.navigate('loyalty')">
+              <div style="display:flex;flex-direction:column;gap:0.35rem">
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:0.08em;opacity:0.85" x-text="promo.tag"></span>
+                <h4 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.01em;color:var(--c-text-primary)" x-text="promo.title"></h4>
+                <p style="font-size:0.875rem;opacity:0.75" x-text="promo.desc"></p>
+              </div>
+              <div class="promo-banner-btn" :style="`background:${promo.color};color:white;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800`">→</div>
+            </div>
+          </template>
+        </div>
+
+        <!-- DYNAMIC PRODUCTS CATALOG -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          
+          <!-- Filters & Sorting Bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--c-border)">
+            <h3 id="storefront-catalog-title" style="font-weight:800;letter-spacing:-0.02em">
+              Featured Products <span style="font-size:1rem;color:var(--c-text-secondary);font-weight:500" x-text="`(${products.length} found)`"></span>
+            </h3>
+            
+            <div style="margin-left:auto;display:flex;align-items:center;gap:0.75rem">
+              <!-- Search in storefront -->
+              <div class="search-bar" style="max-width:240px">
+                <svg class="search-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+                <input type="search" x-model="searchQuery" @input="triggerSearch()" placeholder="Search shop…" id="storefront-search" />
+              </div>
+              
+              <!-- Sort Dropdown -->
+              <select class="form-input" style="width:auto;border-radius:12px;padding:0.35rem 2rem 0.35rem 1rem;font-size:0.8125rem" x-model="sortBy" @change="loadProducts()" id="storefront-sort">
+                <option value="default">Best Match</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Loading state -->
+          <div x-show="loading" class="products-grid">
+            <template x-for="i in 8" :key="i">
+              <div style="border-radius:20px;overflow:hidden;border:1px solid var(--c-border)">
+                <div class="skeleton" style="aspect-ratio:4/3"></div>
+                <div style="padding:1rem">
+                  <div class="skeleton" style="height:12px;margin-bottom:0.5rem"></div>
+                  <div class="skeleton" style="height:12px;width:60%"></div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Storefront Products Grid -->
+          <div class="products-grid" x-show="!loading">
+            <template x-for="product in products" :key="product.id">
+              <div class="product-card reveal" style="border:1px solid var(--c-border);border-radius:20px;overflow:hidden;background:var(--c-surface)">
+                
+                <div class="product-image-wrap" style="aspect-ratio:4/3;position:relative;background:#fbfbfb;cursor:pointer" @click="openQuickView(product)">
+                  <template x-if="product.image_url">
+                    <img class="product-image" :src="product.image_url" :alt="product.name" loading="lazy" style="width:100%;height:100%;object-fit:cover;transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)" />
+                  </template>
+                  <template x-if="!product.image_url">
+                    <div class="product-image-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem" x-text="fmt.categoryEmoji(product.category)"></div>
+                  </template>
+                  
+                  <div class="product-out-of-stock-overlay" x-show="product.stock_quantity === 0" style="position:absolute;inset:0;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--c-danger);text-transform:uppercase;font-size:0.875rem">Out of Stock</div>
+                  <span class="product-badge" :class="stockStatusClass(product)" style="position:absolute;top:0.75rem;right:0.75rem;padding:0.25rem 0.65rem;border-radius:8px;font-size:0.6875rem;font-weight:800" x-text="stockStatusLabel(product)"></span>
+                  <span class="product-badge" x-show="isExpiringSoon(product)" style="position:absolute;top:0.75rem;left:0.75rem;background:#ff3b30;color:white;padding:0.25rem 0.65rem;border-radius:8px;font-size:0.6875rem;font-weight:800" x-text="'Expires Soon'"></span>
+                </div>
+
+                <div class="product-card-body" style="padding:1rem;display:flex;flex-direction:column;gap:0.25rem">
+                  <div class="product-category" style="font-size:0.75rem;color:var(--c-text-tertiary);text-transform:uppercase;font-weight:700" x-text="product.category || 'Uncategorized'"></div>
+                  <div class="product-name" style="font-size:0.9375rem;font-weight:800;color:var(--c-text-primary);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" @click="openQuickView(product)" x-text="product.name"></div>
+                  <div class="product-price" style="font-size:1.125rem;font-weight:900;color:var(--c-brand-dark);margin:.25rem 0" x-text="`${fmt.currency(product.price)} / ${product.unit_of_measure}`"></div>
+                  <div class="product-stock" style="font-size:0.75rem;color:var(--c-text-secondary);display:flex;align-items:center;gap:0.35rem">
+                    <span>📦</span>
+                    <span x-text="`${product.stock_quantity} left`"></span>
+                  </div>
+                </div>
+
+                <div class="product-card-actions" style="padding:0 1rem 1rem;display:flex;gap:0.5rem">
+                  <button class="btn btn-primary btn-sm" style="flex:1;border-radius:12px" @click="Alpine.store('app').addToCart(product)" :disabled="product.stock_quantity === 0">
+                    Add to Cart
+                  </button>
+                  <button class="btn btn-secondary btn-icon btn-sm" style="border-radius:12px;width:36px;height:36px" @click="openQuickView(product)" title="Quick View">👁️</button>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-state" x-show="products.length === 0">
+            <div class="empty-state-icon">📦</div>
+            <h3>No products found in shop</h3>
+            <p>Try searching for something else or browse another category.</p>
+          </div>
+        </div>
+
+        <!-- DETAILED QUICK VIEW MODAL -->
+        <div class="modal-overlay" x-show="selectedProduct !== null" @click.self="closeQuickView()" style="backdrop-filter:blur(8px);z-index:9999" x-cloak>
+          <div class="modal" style="max-width:720px;border-radius:24px;padding:2rem">
+            <button class="btn btn-ghost btn-icon" @click="closeQuickView()" style="position:absolute;top:1rem;right:1rem;z-index:10">✕</button>
+            
+            <template x-if="selectedProduct">
+              <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:2rem;align-items:center">
+                <!-- Image -->
+                <div style="background:#fbfbfb;border-radius:16px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--c-border)">
+                  <template x-if="selectedProduct.image_url">
+                    <img :src="selectedProduct.image_url" :alt="selectedProduct.name" style="width:100%;height:100%;object-fit:cover" />
+                  </template>
+                  <template x-if="!selectedProduct.image_url">
+                    <div style="font-size:5rem" x-text="fmt.categoryEmoji(selectedProduct.category)"></div>
+                  </template>
+                </div>
+                
+                <!-- Details -->
+                <div style="display:flex;flex-direction:column;gap:0.75rem;align-items:flex-start">
+                  <span class="product-badge" :class="stockStatusClass(selectedProduct)" style="padding:0.25rem 0.65rem;border-radius:8px;font-size:0.6875rem;font-weight:800" x-text="stockStatusLabel(selectedProduct)"></span>
+                  <span style="font-size:0.8125rem;font-weight:700;color:var(--c-text-tertiary);text-transform:uppercase" x-text="selectedProduct.category"></span>
+                  <h2 style="font-size:1.75rem;font-weight:900;letter-spacing:-0.02em;line-height:1.2;color:var(--c-text-primary)" x-text="selectedProduct.name"></h2>
+                  <div style="font-size:1.5rem;font-weight:900;color:var(--c-brand-dark)" x-text="`${fmt.currency(selectedProduct.price)} / ${selectedProduct.unit_of_measure}`"></div>
+                  
+                  <p style="font-size:0.9375rem;color:var(--c-text-secondary);line-height:1.5" x-text="selectedProduct.description || 'No description provided for this premium fresh food item.'"></p>
+                  
+                  <div style="font-size:0.8125rem;color:var(--c-text-tertiary);display:flex;flex-direction:column;gap:0.25rem;margin:0.5rem 0">
+                    <span x-text="`SKU / Barcode: ${selectedProduct.barcode || '—'}`"></span>
+                    <span x-text="`Shelf Location: Bin ${selectedProduct.bin_location || '—'}`"></span>
+                  </div>
+                  
+                  <!-- Quantity counter & Cart Action -->
+                  <div style="display:flex;align-items:center;gap:1rem;width:100%;margin-top:0.5rem">
+                    <div class="qty-stepper" style="border:1px solid var(--c-border);border-radius:12px;padding:0.25rem">
+                      <button class="qty-btn" @click="decreaseQty()" style="width:36px;height:36px;font-size:1.125rem">−</button>
+                      <span class="qty-count" style="font-size:1rem;font-weight:800;width:32px" x-text="quickViewQty"></span>
+                      <button class="qty-btn" @click="increaseQty()" style="width:36px;height:36px;font-size:1.125rem">+</button>
+                    </div>
+                    <button class="btn btn-primary btn-lg" style="flex:1;border-radius:14px" @click="addSelectedToCart()" :disabled="selectedProduct.stock_quantity === 0">
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- STORE NEWSLETTER SIGNUP -->
+        <div style="background:linear-gradient(135deg,#00a86b,#008f5a);border-radius:24px;padding:3rem;display:flex;align-items:center;justify-content:space-between;color:white;box-shadow:var(--shadow-md);margin-top:1.5rem">
+          <div style="max-width:480px;display:flex;flex-direction:column;gap:0.5rem">
+            <h3 style="color:white;font-size:1.75rem;font-weight:900;letter-spacing:-0.01em" x-text="info?.newsletter?.title || 'Join our newsletter list'"></h3>
+            <p style="color:rgba(255,255,255,0.85);font-size:0.9375rem;line-height:1.5" x-text="info?.newsletter?.description || 'Sign up today and get a $10 coupon in your loyalty credit account instantly!'"></p>
+          </div>
+          <div style="display:flex;gap:0.75rem;flex:1;max-width:380px">
+            <input type="email" class="form-input" style="background:white;color:black;border:none;border-radius:14px;padding:0.75rem 1.25rem" x-model="newsletterEmail" placeholder="you@example.com" />
+            <button class="btn" style="background:#ff9500;color:white;font-weight:800;border-radius:14px" @click="subscribeNewsletter()">Subscribe</button>
+          </div>
+        </div>
+
+        <!-- IMMERSIVE FOOTER -->
+        <footer style="margin-top:2.5rem;padding-top:2.5rem;border-top:1px solid var(--c-border);display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:2rem;font-size:0.875rem;color:var(--c-text-secondary)">
+          <div style="display:flex;flex-direction:column;gap:0.85rem">
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <span style="font-size:1.5rem">🥬</span>
+              <h4 style="font-size:1.25rem;font-weight:900;color:var(--c-text-primary)" x-text="info?.footer?.about_title || 'FreshMart Store'"></h4>
+            </div>
+            <p style="line-height:1.6" x-text="info?.footer?.about_text || 'Your number-one local provider of organic, fresh, and premium quality grocery items.'"></p>
+            <div style="display:flex;gap:0.75rem;margin-top:0.25rem">
+              <span style="background:var(--c-brand-light);color:var(--c-brand);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer">f</span>
+              <span style="background:var(--c-brand-light);color:var(--c-brand);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer">t</span>
+              <span style="background:var(--c-brand-light);color:var(--c-brand);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer">i</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.85rem">
+            <h4 style="font-size:1rem;font-weight:800;color:var(--c-text-primary)" x-text="info?.footer?.hours_title || 'Operational Hours'"></h4>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;line-height:1.5">
+              <template x-for="hourLine in (info?.footer?.hours || [])" :key="hourLine">
+                <span x-text="hourLine"></span>
+              </template>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.85rem">
+            <h4 style="font-size:1rem;font-weight:800;color:var(--c-text-primary)" x-text="info?.footer?.support_title || 'Contact Support'"></h4>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;line-height:1.5">
+              <template x-for="supportLine in (info?.footer?.support || [])" :key="supportLine">
+                <span x-text="supportLine"></span>
+              </template>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+
+      <!-- ══ DASHBOARD ══════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'dashboard'" x-data="dashboardComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Good day, <span x-text="$store.app.currentUser?.name?.split(' ')[0]"></span> 👋</h2>
+            <p>Here's what's happening at FreshMart today.</p>
+          </div>
+          <button class="btn btn-secondary" @click="loadAll()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Refresh
+          </button>
+        </div>
+
+        <!-- Skeleton loader -->
+        <template x-if="loading">
+          <div class="metrics-grid">
+            <template x-for="i in 8" :key="i">
+              <div class="metric-card"><div class="skeleton" style="height:120px;border-radius:12px"></div></div>
+            </template>
+          </div>
+        </template>
+
+        <!-- Metric cards -->
+        <div class="metrics-grid" x-show="!loading">
+          <template x-for="card in metricCards" :key="card.label">
+            <div class="metric-card reveal" :style="`--metric-color:${card.color};--metric-bg:${card.bg}`">
+              <div class="metric-icon-wrap" style="font-size:1.5rem" x-text="card.icon"></div>
+              <div class="metric-value" x-text="card.value"></div>
+              <div class="metric-label" x-text="card.label"></div>
+              <div class="metric-delta" :class="card.deltaDir" x-show="card.delta">
+                <span x-show="card.deltaDir === 'up'">↑</span>
+                <span x-show="card.deltaDir === 'down'">↓</span>
+                <span x-text="card.delta"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Bottom section: Low stock + Top products + Recent orders -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:0">
+
+          <!-- Low Stock Alerts -->
+          <div class="card reveal">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+              <h3>⚠️ Low Stock Alerts</h3>
+              <button class="btn btn-secondary btn-sm" @click="$store.app.navigate('warehouse')">View Warehouse</button>
+            </div>
+            <template x-if="lowStockItems.length === 0">
+              <div class="empty-state" style="padding:1.5rem">
+                <div class="empty-state-icon">✅</div>
+                <p>All stock levels are healthy!</p>
+              </div>
+            </template>
+            <template x-for="item in lowStockItems.slice(0,5)" :key="item.id">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:.625rem 0;border-bottom:1px solid var(--c-border-2)">
+                <div>
+                  <div style="font-size:.875rem;font-weight:600;color:var(--c-text-primary)" x-text="item.name"></div>
+                  <div style="font-size:.75rem;color:var(--c-text-secondary)" x-text="`${item.category || 'Uncategorized'} · Bin: ${item.bin_location || '—'}`"></div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:1rem;font-weight:800;color:var(--c-warning)" x-text="item.stock_quantity + ' left'"></div>
+                  <div style="font-size:.6875rem;color:var(--c-text-tertiary)" x-text="`Threshold: ${item.low_stock_threshold}`"></div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Top Products -->
+          <div class="card reveal">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+              <h3>🏆 Top Products</h3>
+              <button class="btn btn-secondary btn-sm" @click="$store.app.navigate('reports')">Full Report</button>
+            </div>
+            <template x-for="(p, idx) in topProducts" :key="p.product_id">
+              <div style="display:flex;align-items:center;gap:.875rem;padding:.5rem 0;border-bottom:1px solid var(--c-border-2)">
+                <div style="width:28px;height:28px;border-radius:8px;background:var(--c-brand-light);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8125rem;color:var(--c-brand);flex-shrink:0" x-text="idx+1"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:.875rem;font-weight:600;color:var(--c-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="p.name"></div>
+                  <div class="progress-bar" style="margin-top:.375rem">
+                    <div class="progress-fill" :style="`width:${(p.total_sold / (topProducts[0]?.total_sold || 1)) * 100}%`"></div>
+                  </div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:.875rem;font-weight:700;color:var(--c-brand-dark)" x-text="fmt.currency(p.total_revenue)"></div>
+                  <div style="font-size:.6875rem;color:var(--c-text-tertiary)" x-text="`${fmt.number(p.total_sold)} sold`"></div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="card reveal" style="margin-top:1.25rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+            <h3>📋 Recent Orders</h3>
+            <button class="btn btn-secondary btn-sm" @click="$store.app.navigate('pos')">View All</button>
+          </div>
+          <div class="data-table-wrap" style="border:none;border-radius:0;box-shadow:none">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th><th>Customer</th><th>Total</th><th>Method</th><th>Status</th><th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="order in recentOrders.slice(0,8)" :key="order.id">
+                  <tr>
+                    <td><span style="font-family:'Courier New',monospace;font-weight:700;color:var(--c-brand)" x-text="`#${String(order.id).padStart(4,'0')}`"></span></td>
+                    <td x-text="order.user_id ? `User #${order.user_id}` : 'Walk-in'"></td>
+                    <td style="font-weight:700" x-text="fmt.currency(order.total_price)"></td>
+                    <td style="text-transform:capitalize" x-text="order.payment_method?.replace('_',' ')"></td>
+                    <td><span class="status-badge" :class="fmt.orderStatusCss(order.status)" x-text="order.status"></span></td>
+                    <td x-text="fmt.relativeDate(order.created_at)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PRODUCTS ════════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'products'" x-data="productsComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Product Catalog</h2>
+            <p x-text="`${products.length} products across ${categories.length} categories`"></p>
+          </div>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" x-show="!scannerActive" @click="scannerActive=true">
+              📷 Barcode Scanner
+            </button>
+            <button class="btn btn-primary" @click="openCreate()" x-show="$store.app.hasRole('admin','manager')" id="create-product-btn">
+              + Add Product
+            </button>
+          </div>
+        </div>
+
+        <!-- Barcode scanner input -->
+        <div x-show="scannerActive" class="card" style="margin-bottom:1.25rem">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div class="scanner-input-wrap" style="flex:1">
+              <svg class="scanner-icon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="4" height="16"/><rect x="9" y="4" width="2" height="16"/><rect x="13" y="4" width="4" height="16"/><rect x="19" y="4" width="2" height="16"/></svg>
+              <input class="form-input scanner-input" x-model="barcodeInput" @keydown.enter="scanBarcode()" placeholder="Scan or type barcode then press Enter…" id="barcode-input" autofocus />
+            </div>
+            <button class="btn btn-primary" @click="scanBarcode()" id="scan-btn">Scan</button>
+            <button class="btn btn-ghost" @click="scannerActive=false">✕</button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-row">
+          <div class="search-bar" style="max-width:280px">
+            <svg class="search-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+            <input type="search" x-model="search" @input="debouncedSearch()" placeholder="Search products…" id="product-search" />
+          </div>
+          <select class="form-input" style="width:auto" x-model="selectedCategory" @change="loadProducts()" id="category-filter">
+            <option value="">All Categories</option>
+            <template x-for="cat in categories" :key="cat">
+              <option :value="cat" x-text="cat"></option>
+            </template>
+          </select>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem;font-weight:500">
+            <input type="checkbox" x-model="lowStockOnly" @change="loadProducts()" /> Low Stock Only
+          </label>
+          <div style="margin-left:auto;display:flex;gap:.5rem">
+            <button class="btn btn-ghost btn-icon" :class="{active: viewMode==='grid'}" @click="viewMode='grid'" title="Grid view">⊞</button>
+            <button class="btn btn-ghost btn-icon" :class="{active: viewMode==='table'}" @click="viewMode='table'" title="Table view">≡</button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div x-show="loading" class="products-grid">
+          <template x-for="i in 8" :key="i">
+            <div style="border-radius:20px;overflow:hidden;border:1px solid var(--c-border)">
+              <div class="skeleton" style="aspect-ratio:4/3"></div>
+              <div style="padding:1rem"><div class="skeleton" style="height:12px;margin-bottom:.5rem"></div><div class="skeleton" style="height:12px;width:60%"></div></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Grid view -->
+        <div class="products-grid" x-show="!loading && viewMode==='grid'">
+          <template x-for="product in products" :key="product.id">
+            <div class="product-card reveal">
+              <div class="product-image-wrap">
+                <template x-if="product.image_url">
+                  <img class="product-image" :src="product.image_url" :alt="product.name" loading="lazy" />
+                </template>
+                <template x-if="!product.image_url">
+                  <div class="product-image-placeholder" x-text="fmt.categoryEmoji(product.category)"></div>
+                </template>
+                <div class="product-out-of-stock-overlay" x-show="product.stock_quantity === 0">Out of Stock</div>
+                <span class="product-badge" :class="stockStatusClass(product)" x-text="stockStatusLabel(product)"></span>
+                <span class="product-badge" x-show="isExpiringSoon(product)" style="top:0.75rem;left:0.75rem;right:auto" x-text="'Exp. Soon'" :class="'badge-expiring'"></span>
+              </div>
+              <div class="product-card-body">
+                <div class="product-category" x-text="product.category || 'Uncategorized'"></div>
+                <div class="product-name" x-text="product.name"></div>
+                <div class="product-price" x-text="`${fmt.currency(product.price)} / ${product.unit_of_measure}`"></div>
+                <div class="product-stock">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0v10l-8 4M4 7v10l8 4"/></svg>
+                  <span x-text="`${product.stock_quantity} ${product.unit_of_measure}(s) in stock`"></span>
+                </div>
+              </div>
+              <div class="product-card-actions">
+                <button class="btn btn-primary btn-sm" style="flex:1" @click="Alpine.store('app').addToCart(product)" :disabled="product.stock_quantity === 0">
+                  Add to Cart
+                </button>
+                <button class="btn btn-ghost btn-icon btn-sm" @click="openEdit(product)" x-show="$store.app.hasRole('admin','manager')" title="Edit">✏️</button>
+                <button class="btn btn-ghost btn-icon btn-sm" @click="deleteProduct(product)" x-show="$store.app.hasRole('admin','manager')" title="Archive">🗑</button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Table view -->
+        <div class="data-table-wrap" x-show="!loading && viewMode==='table'">
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Bin</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              <template x-for="product in products" :key="product.id">
+                <tr>
+                  <td>
+                    <div style="font-weight:600" x-text="product.name"></div>
+                    <div style="font-size:.75rem;color:var(--c-text-tertiary)" x-text="product.barcode ? `SKU: ${product.barcode}` : ''"></div>
+                  </td>
+                  <td x-text="product.category || '—'"></td>
+                  <td style="font-weight:700" x-text="fmt.currency(product.price)"></td>
+                  <td>
+                    <span :style="`font-weight:700;color:${product.stock_quantity===0?'var(--c-danger)':product.stock_quantity<=product.low_stock_threshold?'var(--c-warning)':'var(--c-success)'}`" x-text="product.stock_quantity"></span>
+                  </td>
+                  <td style="font-family:'Courier New',monospace;font-size:.8125rem" x-text="product.bin_location || '—'"></td>
+                  <td><span class="product-badge" :class="stockStatusClass(product)" x-text="stockStatusLabel(product)"></span></td>
+                  <td>
+                    <div style="display:flex;gap:.375rem">
+                      <button class="btn btn-primary btn-sm" @click="Alpine.store('app').addToCart(product)" :disabled="product.stock_quantity === 0">+ Cart</button>
+                      <button class="btn btn-secondary btn-sm" @click="openEdit(product)" x-show="$store.app.hasRole('admin','manager')">Edit</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" x-show="!loading && products.length === 0">
+          <div class="empty-state-icon">📦</div>
+          <h3>No products found</h3>
+          <p>Try adjusting your filters or add a new product.</p>
+        </div>
+
+        <!-- Product Modal -->
+        <div class="modal-overlay" x-show="showModal" @click.self="showModal=false">
+          <div class="modal" style="max-width:600px">
+            <div class="modal-header">
+              <h3 x-text="editingProduct ? 'Edit Product' : 'Add New Product'"></h3>
+              <button class="btn btn-ghost btn-icon" @click="showModal=false">✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Product Name *</label>
+                <input class="form-input" x-model="form.name" placeholder="e.g. Organic Gala Apples" />
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Description</label>
+                <input class="form-input" x-model="form.description" placeholder="Short product description" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Retail Price ($) *</label>
+                <input type="number" class="form-input" x-model="form.price" step="0.01" min="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cost Price ($)</label>
+                <input type="number" class="form-input" x-model="form.cost_price" step="0.01" min="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Stock Quantity</label>
+                <input type="number" class="form-input" x-model="form.stock_quantity" min="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Low Stock Threshold</label>
+                <input type="number" class="form-input" x-model="form.low_stock_threshold" min="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <input class="form-input" x-model="form.category" list="category-list" placeholder="Fruits, Dairy, Bakery…" />
+                <datalist id="category-list">
+                  <template x-for="cat in categories" :key="cat"><option :value="cat"></option></template>
+                </datalist>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit of Measure</label>
+                <select class="form-input" x-model="form.unit_of_measure">
+                  <option>unit</option><option>lb</option><option>kg</option><option>oz</option><option>g</option><option>liter</option><option>gallon</option><option>pack</option><option>bag</option><option>box</option><option>bunch</option><option>pint</option><option>tub</option><option>bar</option><option>tin</option><option>loaf</option><option>bottle</option><option>each</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Barcode</label>
+                <input class="form-input" x-model="form.barcode" placeholder="EAN-13 barcode" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bin Location</label>
+                <input class="form-input" x-model="form.bin_location" placeholder="e.g. A-01" />
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Image URL</label>
+                <input class="form-input" x-model="form.image_url" placeholder="https://images.unsplash.com/…" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="showModal=false">Cancel</button>
+              <button class="btn btn-primary" @click="saveProduct()" :disabled="modalLoading">
+                <span x-show="modalLoading" class="spinner"></span>
+                <span x-text="editingProduct ? 'Save Changes' : 'Create Product'"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ POINT OF SALE ══════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'pos'" x-data="posComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Point of Sale</h2>
+            <p>Process sales transactions and manage orders</p>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn" :class="{active: activeTab==='cart'}" @click="activeTab='cart'">🛒 Checkout</button>
+          <button class="tab-btn" :class="{active: activeTab==='orders'}" @click="activeTab='orders'">📋 Order History</button>
+        </div>
+
+        <!-- Cart / Checkout view -->
+        <div x-show="activeTab === 'cart'">
+          <div style="display:grid;grid-template-columns:1fr 380px;gap:1.5rem">
+
+            <!-- Product quick-add (link to products page) -->
+            <div>
+              <div class="card" style="margin-bottom:1.25rem;text-align:center;padding:3rem">
+                <div style="font-size:3rem;margin-bottom:1rem">🛒</div>
+                <h3>Add Products to Cart</h3>
+                <p style="margin:0.5rem 0 1.5rem">Browse the product catalog to add items to the cart.</p>
+                <button class="btn btn-primary" @click="$store.app.navigate('products')">Browse Products</button>
+              </div>
+
+              <!-- Current cart items -->
+              <div class="card" x-show="$store.app.cartItems.length > 0">
+                <h4 style="margin-bottom:1rem">Cart Items</h4>
+                <template x-for="item in $store.app.cartItems" :key="item.product.id">
+                  <div class="cart-item">
+                    <template x-if="item.product.image_url">
+                      <img class="cart-item-image" :src="item.product.image_url" :alt="item.product.name" />
+                    </template>
+                    <template x-if="!item.product.image_url">
+                      <div class="cart-item-image" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem" x-text="fmt.categoryEmoji(item.product.category)"></div>
+                    </template>
+                    <div style="flex:1;min-width:0">
+                      <div class="cart-item-name" x-text="item.product.name"></div>
+                      <div style="font-size:.8125rem;color:var(--c-text-secondary)" x-text="fmt.currency(item.product.price) + ' / ' + item.product.unit_of_measure"></div>
+                    </div>
+                    <div class="qty-stepper">
+                      <button class="qty-btn" @click="$store.app.updateCartQty(item.product.id, -1)">−</button>
+                      <span class="qty-count" x-text="item.quantity"></span>
+                      <button class="qty-btn" @click="$store.app.updateCartQty(item.product.id, 1)">+</button>
+                    </div>
+                    <button class="btn btn-ghost btn-icon" @click="$store.app.removeFromCart(item.product.id)" style="color:var(--c-danger)">✕</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Order summary / payment panel -->
+            <div class="card" style="height:fit-content;position:sticky;top:84px">
+              <h4 style="margin-bottom:1.25rem">Order Summary</h4>
+
+              <!-- Payment method -->
+              <div style="margin-bottom:1.25rem">
+                <label class="form-label">Payment Method</label>
+                <div class="payment-method-grid">
+                  <template x-for="opt in paymentOptions" :key="opt.value">
+                    <div class="payment-option" :class="{selected: paymentMethod===opt.value}" @click="paymentMethod=opt.value">
+                      <div class="payment-option-icon" x-text="opt.icon"></div>
+                      <div class="payment-option-label" x-text="opt.label"></div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Discount -->
+              <div class="form-group">
+                <label class="form-label">Discount Amount ($)</label>
+                <input type="number" class="form-input" x-model="discount" min="0" step="0.01" />
+              </div>
+
+              <!-- Totals -->
+              <div class="cart-totals">
+                <div class="cart-total-row"><span>Subtotal</span><span x-text="fmt.currency(subtotal)"></span></div>
+                <div class="cart-total-row"><span>Tax (8%)</span><span x-text="fmt.currency(taxAmount)"></span></div>
+                <div class="cart-total-row" x-show="discountAmount > 0"><span>Discount</span><span style="color:var(--c-success)" x-text="'−' + fmt.currency(discountAmount)"></span></div>
+                <div class="cart-total-row grand"><span>Total</span><span x-text="fmt.currency(total)"></span></div>
+              </div>
+
+              <button class="btn btn-primary btn-full btn-lg" @click="checkout()" :disabled="checkoutLoading || $store.app.cartItems.length === 0" id="checkout-btn">
+                <span x-show="checkoutLoading" class="spinner"></span>
+                <span x-text="checkoutLoading ? 'Processing…' : `Complete Sale · ${fmt.currency(total)}`"></span>
+              </button>
+              <button class="btn btn-ghost btn-full" style="margin-top:.5rem" @click="$store.app.clearCart()" x-show="$store.app.cartItems.length > 0">Clear Cart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order History -->
+        <div x-show="activeTab === 'orders'">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Order #</th><th>Total</th><th>Items</th><th>Payment</th><th>Status</th><th>Date</th><th>Invoice</th></tr>
+              </thead>
+              <tbody>
+                <template x-for="order in orders" :key="order.id">
+                  <tr>
+                    <td><span style="font-family:'Courier New',monospace;font-weight:700;color:var(--c-brand)" x-text="`#${String(order.id).padStart(4,'0')}`"></span></td>
+                    <td style="font-weight:700" x-text="fmt.currency(order.total_price)"></td>
+                    <td x-text="order.items?.length || 0"></td>
+                    <td style="text-transform:capitalize" x-text="order.payment_method?.replace('_',' ')"></td>
+                    <td><span class="status-badge" :class="orderStatusCss(order.status)" x-text="order.status"></span></td>
+                    <td x-text="fmt.datetime(order.created_at)"></td>
+                    <td><button class="btn btn-secondary btn-sm" @click="showOrderInvoice(order.id)">🖨 Invoice</button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Invoice Modal -->
+        <div class="modal-overlay" x-show="showInvoice" @click.self="showInvoice=false">
+          <div class="modal" style="max-width:520px">
+            <div class="modal-header">
+              <h3>Digital Invoice</h3>
+              <div style="display:flex;gap:.5rem">
+                <button class="btn btn-primary btn-sm" @click="printInvoice()">🖨 Print</button>
+                <button class="btn btn-ghost btn-icon" @click="showInvoice=false">✕</button>
+              </div>
+            </div>
+            <div class="invoice-sheet" x-show="invoiceData">
+              <div class="invoice-header">
+                <div style="font-size:1.25rem;font-weight:800" x-text="invoiceData?.store_name"></div>
+                <div style="font-size:.8125rem;color:#666" x-text="invoiceData?.store_address"></div>
+                <hr class="invoice-divider" />
+                <div x-text="`Invoice: ${invoiceData?.invoice_number}`"></div>
+                <div x-text="`Date: ${fmt.datetime(invoiceData?.date)}`"></div>
+                <div x-text="`Cashier: ${invoiceData?.cashier}`"></div>
+                <div x-text="`Payment: ${invoiceData?.payment_method?.replace('_',' ').toUpperCase()}`"></div>
+              </div>
+              <hr class="invoice-divider" />
+              <template x-for="item in invoiceData?.line_items || []" :key="item.name">
+                <div style="display:flex;justify-content:space-between;margin:.25rem 0">
+                  <span x-text="`${item.qty}x ${item.name}`"></span>
+                  <span x-text="fmt.currency(item.line_total)"></span>
+                </div>
+              </template>
+              <hr class="invoice-divider" />
+              <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span x-text="fmt.currency(invoiceData?.subtotal)"></span></div>
+              <div style="display:flex;justify-content:space-between"><span x-text="`Tax (${invoiceData?.tax_rate_pct})`"></span><span x-text="fmt.currency(invoiceData?.tax_amount)"></span></div>
+              <div style="display:flex;justify-content:space-between;font-weight:800;margin-top:.5rem;font-size:1rem"><span>TOTAL</span><span x-text="fmt.currency(invoiceData?.total)"></span></div>
+              <hr class="invoice-divider" />
+              <div style="text-align:center;font-size:.8125rem" x-text="invoiceData?.thank_you_message"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ANALYTICS ══════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'reports'" x-data="reportsComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Sales Analytics</h2>
+            <p>Revenue trends, profit margins, and product performance</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:center">
+            <select class="form-input" style="width:auto" x-model="daysBack" @change="loadData()">
+              <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Period tabs -->
+        <div class="tab-bar">
+          <button class="tab-btn" :class="{active: period==='daily'}" @click="changePeriod('daily')">Daily</button>
+          <button class="tab-btn" :class="{active: period==='weekly'}" @click="changePeriod('weekly')">Weekly</button>
+          <button class="tab-btn" :class="{active: period==='monthly'}" @click="changePeriod('monthly')">Monthly</button>
+        </div>
+
+        <!-- Summary KPIs -->
+        <div class="metrics-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem">
+          <div class="metric-card"><div class="metric-value" x-text="fmt.currency(totalRevenue)"></div><div class="metric-label">Total Revenue</div></div>
+          <div class="metric-card"><div class="metric-value" x-text="fmt.currency(totalProfit)"></div><div class="metric-label">Total Profit</div></div>
+          <div class="metric-card"><div class="metric-value" x-text="fmt.number(totalOrders)"></div><div class="metric-label">Total Orders</div></div>
+          <div class="metric-card"><div class="metric-value" x-text="fmt.currency(avgOrderValue)"></div><div class="metric-label">Avg Order Value</div></div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Revenue & Profit</div>
+            <div class="chart-subtitle" x-text="`${period.charAt(0).toUpperCase()+period.slice(1)} breakdown over the last ${daysBack} days`"></div>
+            <div style="height:280px"><canvas id="revenueChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Order Volume</div>
+            <div class="chart-subtitle">Number of completed transactions</div>
+            <div style="height:280px"><canvas id="ordersChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-card" style="margin-top:1.25rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center">
+            <div>
+              <div class="chart-title">Top Products by Revenue</div>
+              <div class="chart-subtitle">Best performing products this period</div>
+              <div style="height:280px"><canvas id="topProductsChart"></canvas></div>
+            </div>
+            <div>
+              <template x-for="(p, i) in topProducts.slice(0,8)" :key="p.product_id">
+                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.875rem">
+                  <span style="font-size:.75rem;font-weight:800;color:var(--c-text-tertiary);width:16px" x-text="i+1"></span>
+                  <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:.25rem">
+                      <span style="font-size:.875rem;font-weight:600" x-text="p.name"></span>
+                      <span style="font-size:.875rem;font-weight:700;color:var(--c-brand-dark)" x-text="fmt.currency(p.total_revenue)"></span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" :style="`width:${(p.total_revenue/(topProducts[0]?.total_revenue||1))*100}%;background:hsl(${152+i*20},70%,45%)`"></div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SUPPLIERS ══════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'suppliers'" x-data="suppliersComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info"><h2>Suppliers & Procurement</h2><p>Manage supplier relationships and purchase orders</p></div>
+          <div style="display:flex;gap:.75rem">
+            <button class="btn btn-secondary" @click="activeTab='pos'; openCreatePO()" x-show="activeTab==='pos'">+ New PO</button>
+            <button class="btn btn-primary" @click="openCreateSupplier()">+ Add Supplier</button>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn" :class="{active: activeTab==='suppliers'}" @click="activeTab='suppliers'">Suppliers</button>
+          <button class="tab-btn" :class="{active: activeTab==='pos'}" @click="activeTab='pos'">Purchase Orders</button>
+        </div>
+
+        <!-- Suppliers table -->
+        <div x-show="activeTab === 'suppliers'">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Reliability</th><th>Actions</th></tr></thead>
+              <tbody>
+                <template x-for="s in suppliers" :key="s.id">
+                  <tr>
+                    <td style="font-weight:600" x-text="s.name"></td>
+                    <td x-text="s.contact_email || '—'"></td>
+                    <td x-text="s.contact_phone || '—'"></td>
+                    <td>
+                      <div style="display:flex;align-items:center;gap:.5rem">
+                        <span style="font-weight:700;color:var(--c-brand)" x-text="s.reliability_rating.toFixed(1)"></span>
+                        <div class="progress-bar" style="width:80px"><div class="progress-fill" :style="`width:${s.reliability_rating*10}%`"></div></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display:flex;gap:.375rem">
+                        <button class="btn btn-secondary btn-sm" @click="openEditSupplier(s)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @click="deleteSupplier(s)">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Purchase Orders -->
+        <div x-show="activeTab === 'pos'">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+            <button class="btn btn-primary" @click="openCreatePO()">+ New Purchase Order</button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>PO #</th><th>Supplier</th><th>Items</th><th>Total Cost</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody>
+                <template x-for="po in purchaseOrders" :key="po.id">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-weight:700;color:var(--c-brand)" x-text="`PO-${String(po.id).padStart(4,'0')}`"></td>
+                    <td x-text="suppliers.find(s=>s.id===po.supplier_id)?.name || `Supplier #${po.supplier_id}`"></td>
+                    <td x-text="po.items?.length || 0"></td>
+                    <td style="font-weight:700" x-text="fmt.currency(po.total_cost)"></td>
+                    <td><span class="status-badge" :class="poStatusCss(po.status)" x-text="po.status"></span></td>
+                    <td x-text="fmt.date(po.created_at)"></td>
+                    <td>
+                      <div style="display:flex;gap:.375rem" x-show="po.status !== 'received' && po.status !== 'cancelled'">
+                        <button class="btn btn-secondary btn-sm" @click="updatePOStatus(po,'sent')" x-show="po.status==='draft'">Send</button>
+                        <button class="btn btn-primary btn-sm" @click="updatePOStatus(po,'received')" x-show="po.status==='sent'">Mark Received</button>
+                        <button class="btn btn-danger btn-sm" @click="updatePOStatus(po,'cancelled')">Cancel</button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Supplier Modal -->
+        <div class="modal-overlay" x-show="showSupplierModal" @click.self="showSupplierModal=false">
+          <div class="modal">
+            <div class="modal-header">
+              <h3 x-text="editingSupplier ? 'Edit Supplier' : 'Add Supplier'"></h3>
+              <button class="btn btn-ghost btn-icon" @click="showSupplierModal=false">✕</button>
+            </div>
+            <div class="form-group"><label class="form-label">Supplier Name *</label><input class="form-input" x-model="supplierForm.name" placeholder="e.g. Green Valley Farms" /></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group"><label class="form-label">Contact Email</label><input type="email" class="form-input" x-model="supplierForm.contact_email" /></div>
+              <div class="form-group"><label class="form-label">Contact Phone</label><input class="form-input" x-model="supplierForm.contact_phone" /></div>
+            </div>
+            <div class="form-group"><label class="form-label">Address</label><input class="form-input" x-model="supplierForm.address" /></div>
+            <div class="form-group"><label class="form-label">Reliability Rating (0–10): <strong x-text="supplierForm.reliability_rating"></strong></label><input type="range" x-model="supplierForm.reliability_rating" min="0" max="10" step="0.1" style="width:100%;margin-top:.5rem" /></div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="showSupplierModal=false">Cancel</button>
+              <button class="btn btn-primary" @click="saveSupplier()" :disabled="modalLoading"><span x-show="modalLoading" class="spinner"></span><span x-text="editingSupplier?'Save':'Create'"></span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PO Modal -->
+        <div class="modal-overlay" x-show="showPOModal" @click.self="showPOModal=false">
+          <div class="modal" style="max-width:640px;max-height:80vh;overflow-y:auto">
+            <div class="modal-header">
+              <h3>New Purchase Order</h3>
+              <button class="btn btn-ghost btn-icon" @click="showPOModal=false">✕</button>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Supplier *</label>
+              <select class="form-input" x-model="poForm.supplier_id">
+                <option value="">Select supplier…</option>
+                <template x-for="s in suppliers" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group"><label class="form-label">Notes</label><input class="form-input" x-model="poForm.notes" /></div>
+              <div class="form-group"><label class="form-label">Expected Delivery</label><input type="date" class="form-input" x-model="poForm.expected_delivery" /></div>
+            </div>
+            <h4 style="margin-bottom:1rem">Line Items</h4>
+            <template x-for="(item, idx) in poForm.items" :key="idx">
+              <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.75rem;align-items:end;margin-bottom:.75rem">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Product</label>
+                  <select class="form-input" x-model="item.product_id" @change="autofillCost(item)">
+                    <option value="">Select…</option>
+                    <template x-for="p in products" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0"><label class="form-label">Qty</label><input type="number" class="form-input" x-model="item.quantity" min="1" /></div>
+                <div class="form-group" style="margin:0"><label class="form-label">Unit Cost ($)</label><input type="number" class="form-input" x-model="item.unit_cost" step="0.01" /></div>
+                <button class="btn btn-danger btn-icon" @click="removePOItem(idx)" style="margin-bottom:1.25rem">✕</button>
+              </div>
+            </template>
+            <button class="btn btn-secondary btn-sm" @click="addPOItem()">+ Add Line Item</button>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="showPOModal=false">Cancel</button>
+              <button class="btn btn-primary" @click="savePO()" :disabled="modalLoading"><span x-show="modalLoading" class="spinner"></span>Create PO</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ WAREHOUSE ══════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'warehouse'" x-data="warehouseComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info"><h2>Warehouse & Inventory</h2><p>Bin-level stock tracking and intra-store transfers</p></div>
+          <button class="btn btn-primary" @click="openTransfer()">↔ New Transfer</button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+          <div class="metric-card" style="--metric-color:var(--c-warning);--metric-bg:var(--c-warning-light)">
+            <div class="metric-value" x-text="lowStockCount"></div><div class="metric-label">Low Stock Items</div>
+          </div>
+          <div class="metric-card" style="--metric-color:var(--c-danger);--metric-bg:var(--c-danger-light)">
+            <div class="metric-value" x-text="outOfStockCount"></div><div class="metric-label">Out of Stock</div>
+          </div>
+          <div class="metric-card" style="--metric-color:var(--c-brand);--metric-bg:var(--c-brand-light)">
+            <div class="metric-value" x-text="expiringCount"></div><div class="metric-label">Expiring ≤7 Days</div>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn" :class="{active: activeTab==='inventory'}" @click="activeTab='inventory'">📦 Inventory</button>
+          <button class="tab-btn" :class="{active: activeTab==='transfers'}" @click="activeTab='transfers'">↔ Transfer History</button>
+        </div>
+
+        <!-- Bin filter -->
+        <div class="filter-row" x-show="activeTab==='inventory'">
+          <select class="form-input" style="width:auto" x-model="selectedBin" @change="loadInventory()">
+            <option value="">All Bins</option>
+            <template x-for="bin in bins" :key="bin"><option :value="bin" x-text="bin"></option></template>
+          </select>
+        </div>
+
+        <!-- Inventory grid -->
+        <div class="bin-grid" x-show="activeTab==='inventory'">
+          <template x-for="item in inventory" :key="item.product_id">
+            <div class="bin-card" :class="stockClass(item)" @click="openTransfer(item)">
+              <div class="bin-label" x-text="item.bin_location"></div>
+              <div style="font-size:.875rem;font-weight:600;margin:.5rem 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="item.name"></div>
+              <div style="font-size:1.25rem;font-weight:800;color:var(--c-text-primary)" x-text="item.stock_quantity"></div>
+              <div style="font-size:.6875rem;color:var(--c-text-secondary)" x-text="`${item.unit_of_measure}(s) · Threshold: ${item.low_stock_threshold}`"></div>
+              <div style="font-size:.6875rem;color:var(--c-danger);margin-top:.25rem" x-show="item.expiry_date" x-text="`Exp: ${fmt.date(item.expiry_date)}`"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Transfer history -->
+        <div class="data-table-wrap" x-show="activeTab==='transfers'">
+          <table class="data-table">
+            <thead><tr><th>Product ID</th><th>From Bin</th><th>To Bin</th><th>Qty</th><th>Date</th></tr></thead>
+            <tbody>
+              <template x-for="t in transfers" :key="t.id">
+                <tr>
+                  <td x-text="`Product #${t.product_id}`"></td>
+                  <td style="font-family:'Courier New',monospace" x-text="t.from_bin"></td>
+                  <td style="font-family:'Courier New',monospace" x-text="t.to_bin"></td>
+                  <td style="font-weight:700" x-text="t.quantity"></td>
+                  <td x-text="fmt.datetime(t.transferred_at)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Transfer Modal -->
+        <div class="modal-overlay" x-show="showTransferModal" @click.self="showTransferModal=false">
+          <div class="modal">
+            <div class="modal-header"><h3>Stock Transfer</h3><button class="btn btn-ghost btn-icon" @click="showTransferModal=false">✕</button></div>
+            <div class="form-group">
+              <label class="form-label">Product</label>
+              <select class="form-input" x-model="transferForm.product_id">
+                <option value="">Select product…</option>
+                <template x-for="p in products" :key="p.id"><option :value="p.id" x-text="`${p.name} (${p.bin_location || 'No bin'} — ${p.stock_quantity} in stock)`"></option></template>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group"><label class="form-label">From Bin</label><input class="form-input" x-model="transferForm.from_bin" placeholder="e.g. A-01" /></div>
+              <div class="form-group"><label class="form-label">To Bin</label><input class="form-input" x-model="transferForm.to_bin" placeholder="e.g. B-03" /></div>
+            </div>
+            <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-input" x-model="transferForm.quantity" min="1" /></div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="showTransferModal=false">Cancel</button>
+              <button class="btn btn-primary" @click="saveTransfer()">Execute Transfer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ EMPLOYEES ══════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'employees'" x-data="employeesComponent()" x-init="init()">
+
+        <div class="page-header">
+          <div class="page-header-info"><h2>Employees & Payroll</h2><p>Shift management and payroll tracking</p></div>
+          <button class="btn btn-primary" @click="openCreate()">+ Log Shift</button>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn" :class="{active: activeTab==='shifts'}" @click="activeTab='shifts'">Shifts</button>
+          <button class="tab-btn" :class="{active: activeTab==='payroll'}" @click="activeTab='payroll'">Payroll Summary</button>
+        </div>
+
+        <!-- Shifts table -->
+        <div x-show="activeTab==='shifts'">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Rate</th><th>Gross Pay</th><th>Rating</th></tr></thead>
+              <tbody>
+                <template x-for="shift in shifts" :key="shift.id">
+                  <tr>
+                    <td style="font-weight:600" x-text="employeeName(shift.user_id)"></td>
+                    <td x-text="fmt.datetime(shift.clock_in)"></td>
+                    <td x-text="shift.clock_out ? fmt.datetime(shift.clock_out) : '⏱ Active'"></td>
+                    <td x-text="shift.hours_worked ? shift.hours_worked + 'h' : '—'"></td>
+                    <td x-text="fmt.currency(shift.hourly_rate) + '/hr'"></td>
+                    <td style="font-weight:700;color:var(--c-brand-dark)" x-text="shift.gross_pay ? fmt.currency(shift.gross_pay) : '—'"></td>
+                    <td style="color:var(--c-warning)" x-text="ratingStars(shift.performance_rating)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payroll summary -->
+        <div x-show="activeTab==='payroll'">
+          <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+            <div class="metric-card"><div class="metric-value" x-text="fmt.currency(totalPayroll)"></div><div class="metric-label">Total Payroll</div></div>
+            <div class="metric-card"><div class="metric-value" x-text="totalHours.toFixed(1) + 'h'"></div><div class="metric-label">Total Hours</div></div>
+            <div class="metric-card"><div class="metric-value" x-text="payrollSummary.length"></div><div class="metric-label">Employees</div></div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Employee</th><th>Role</th><th>Shifts</th><th>Hours</th><th>Avg Rating</th><th>Gross Pay</th></tr></thead>
+              <tbody>
+                <template x-for="emp in payrollSummary" :key="emp.user_id">
+                  <tr>
+                    <td style="font-weight:600" x-text="emp.name"></td>
+                    <td style="text-transform:capitalize" x-text="emp.role"></td>
+                    <td x-text="emp.shift_count"></td>
+                    <td x-text="emp.total_hours + 'h'"></td>
+                    <td style="color:var(--c-warning)" x-text="ratingStars(emp.avg_performance_rating)"></td>
+                    <td style="font-weight:800;color:var(--c-brand-dark)" x-text="fmt.currency(emp.total_gross_pay)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Shift modal -->
+        <div class="modal-overlay" x-show="showModal" @click.self="showModal=false">
+          <div class="modal">
+            <div class="modal-header"><h3>Log Employee Shift</h3><button class="btn btn-ghost btn-icon" @click="showModal=false">✕</button></div>
+            <div class="form-group">
+              <label class="form-label">Employee *</label>
+              <select class="form-input" x-model="form.user_id">
+                <option value="">Select employee…</option>
+                <template x-for="e in employees" :key="e.id"><option :value="e.id" x-text="`${e.name} (${e.role})`"></option></template>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group"><label class="form-label">Clock In *</label><input type="datetime-local" class="form-input" x-model="form.clock_in" /></div>
+              <div class="form-group"><label class="form-label">Clock Out</label><input type="datetime-local" class="form-input" x-model="form.clock_out" /></div>
+              <div class="form-group"><label class="form-label">Hourly Rate ($)</label><input type="number" class="form-input" x-model="form.hourly_rate" step="0.5" min="0" /></div>
+              <div class="form-group"><label class="form-label">Performance Rating (1–5)</label><input type="number" class="form-input" x-model="form.performance_rating" step="0.1" min="1" max="5" /></div>
+            </div>
+            <div class="form-group"><label class="form-label">Notes</label><input class="form-input" x-model="form.notes" placeholder="Optional shift notes" /></div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="showModal=false">Cancel</button>
+              <button class="btn btn-primary" @click="saveShift()" :disabled="modalLoading"><span x-show="modalLoading" class="spinner"></span>Log Shift</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ DEMAND FORECASTING ══════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'forecast'" x-data="{
+        suggestions:[], 
+        velocity:[], 
+        loading:false, 
+        analysisDays:30,
+        loadAll() {
+          if (!Alpine.store('app').hasRole('admin', 'manager')) return;
+          this.loading = true;
+          Promise.all([
+            api.get('/api/forecast/reorder', {analysis_days: this.analysisDays, lead_time_days: 3}).then(d => this.suggestions = d),
+            api.get('/api/forecast/velocity', {analysis_days: this.analysisDays}).then(d => this.velocity = d)
+          ]).catch(e => toast.error(e.message)).finally(() => this.loading = false);
+        }
+      }" x-init="loadAll()">
+
+        <div class="page-header">
+          <div class="page-header-info"><h2>Demand Forecasting</h2><p>Sales velocity analysis and auto-reorder recommendations</p></div>
+          <select class="form-input" style="width:auto" x-model="analysisDays" @change="loadAll()">
+            <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+          </select>
+        </div>
+
+        <script>
+          // Inline component methods since this is a simple inline x-data
+          document.addEventListener('alpine:init', () => {});
+        </script>
+
+        <template x-if="loading">
+          <div style="text-align:center;padding:3rem;color:var(--c-text-secondary)">
+            <div class="spinner" style="margin:0 auto 1rem;border-color:rgba(0,168,107,.3);border-top-color:var(--c-brand);width:32px;height:32px;border-width:4px"></div>
+            Analyzing sales data…
+          </div>
+        </template>
+
+        <div class="card" style="margin-bottom:1.5rem">
+          <h3 style="margin-bottom:1rem">🔄 Auto-Reorder Suggestions</h3>
+          <p style="margin-bottom:1.5rem">Products recommended for replenishment based on <span x-text="analysisDays"></span>-day sales velocity.</p>
+
+          <div class="empty-state" x-show="!loading && suggestions.length === 0">
+            <div class="empty-state-icon">✅</div>
+            <h3>All stock levels are sufficient</h3>
+            <p>No reorder recommendations at this time.</p>
+          </div>
+
+          <div class="data-table-wrap" x-show="suggestions.length > 0" style="border:none;box-shadow:none">
+            <table class="data-table">
+              <thead><tr><th>Product</th><th>Stock</th><th>Avg Daily Sales</th><th>Days Remaining</th><th>Suggest Order</th><th>Supplier</th></tr></thead>
+              <tbody>
+                <template x-for="s in suggestions" :key="s.product_id">
+                  <tr>
+                    <td style="font-weight:600" x-text="s.product_name"></td>
+                    <td><span :style="`font-weight:700;color:${s.current_stock<5?'var(--c-danger)':s.current_stock<15?'var(--c-warning)':'var(--c-text-primary)'}`" x-text="s.current_stock"></span></td>
+                    <td x-text="s.avg_daily_sales + ' units/day'"></td>
+                    <td>
+                      <span :style="`font-weight:700;color:${s.days_remaining<3?'var(--c-danger)':s.days_remaining<7?'var(--c-warning)':'var(--c-text-primary)'}`" x-text="s.days_remaining === 9999 ? '∞' : s.days_remaining + ' days'"></span>
+                    </td>
+                    <td style="font-weight:800;color:var(--c-brand)" x-text="s.suggested_order_qty + ' units'"></td>
+                    <td x-text="s.supplier_name || '—'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" x-show="velocity.length > 0">
+          <h3 style="margin-bottom:1rem">📊 Product Sales Velocity</h3>
+          <div class="data-table-wrap" style="border:none;box-shadow:none">
+            <table class="data-table">
+              <thead><tr><th>Rank</th><th>Product</th><th>Category</th><th>Total Sold</th><th>Avg Daily Velocity</th></tr></thead>
+              <tbody>
+                <template x-for="(v, idx) in velocity" :key="v.product_id">
+                  <tr>
+                    <td style="font-weight:800;color:var(--c-text-tertiary)" x-text="idx+1"></td>
+                    <td style="font-weight:600" x-text="v.product_name"></td>
+                    <td x-text="v.category || '—'"></td>
+                    <td style="font-weight:700" x-text="v.total_sold + ' units'"></td>
+                    <td>
+                      <div style="display:flex;align-items:center;gap:.75rem">
+                        <span style="font-weight:600;min-width:60px" x-text="v.avg_daily_velocity + '/day'"></span>
+                        <div class="progress-bar" style="flex:1;max-width:120px">
+                          <div class="progress-fill" :style="`width:${Math.min((v.avg_daily_velocity / (velocity[0]?.avg_daily_velocity||1)) * 100, 100)}%`"></div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ LOYALTY ═════════════════════════════════════════════════ -->
+      <div x-show="$store.app.activePage === 'loyalty'" x-data="{loyaltyData: null, history: [], loading: true}" x-init="
+        Promise.all([
+          api.get('/api/loyalty/points/' + $store.app.currentUser?.id).then(d => loyaltyData = d),
+          api.get('/api/loyalty/purchase-history/' + $store.app.currentUser?.id).then(d => history = d)
+        ]).catch(e => toast.error(e.message)).finally(() => loading = false)
+      ">
+        <div class="page-header">
+          <div class="page-header-info"><h2>Loyalty & Rewards</h2><p>Your points, tier, and purchase history</p></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:360px 1fr;gap:1.5rem" x-show="loyaltyData">
+          <!-- Tier card -->
+          <div class="card" style="text-align:center">
+            <div class="tier-card" :class="`tier-${loyaltyData?.tier}`" style="margin-bottom:1.25rem">
+              <div style="font-size:3rem;margin-bottom:.5rem">⭐</div>
+              <div style="font-size:1.5rem;font-weight:800;color:white" x-text="loyaltyData?.tier_label + ' Member'"></div>
+              <div style="font-size:2.5rem;font-weight:900;color:white;margin:.5rem 0" x-text="fmt.number(loyaltyData?.points)"></div>
+              <div style="color:rgba(255,255,255,.8);font-size:.875rem">loyalty points</div>
+            </div>
+            <div style="margin-bottom:1rem">
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.5rem">
+                <span x-text="loyaltyData?.tier_label"></span>
+                <span x-text="loyaltyData?.next_tier?.label || 'Max Tier'"></span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" :style="`width:${loyaltyData?.next_tier ? Math.min(((loyaltyData.points - (loyaltyData.next_tier.min_points - 1000)) / 1000) * 100, 100) : 100}%`"></div>
+              </div>
+              <div style="font-size:.75rem;color:var(--c-text-secondary);margin-top:.375rem" x-text="loyaltyData?.next_tier ? `${loyaltyData.points_to_next_tier} points to ${loyaltyData.next_tier.label}` : '🏆 Highest tier achieved!'"></div>
+            </div>
+            <div class="metric-card" style="background:var(--c-brand-light);border:none;text-align:left">
+              <div class="metric-label">Member Discount</div>
+              <div class="metric-value" style="font-size:1.5rem;color:var(--c-brand)" x-text="`${loyaltyData?.discount_pct}% off every purchase`"></div>
+            </div>
+          </div>
+
+          <!-- Purchase history -->
+          <div class="card">
+            <h3 style="margin-bottom:1.25rem">Purchase History</h3>
+            <div class="empty-state" x-show="history.length === 0">
+              <div class="empty-state-icon">🛒</div>
+              <h3>No purchases yet</h3>
+              <p>Start shopping to earn loyalty points!</p>
+              <button class="btn btn-primary" style="margin-top:1rem" @click="$store.app.navigate('products')">Browse Products</button>
+            </div>
+            <div class="data-table-wrap" x-show="history.length > 0" style="border:none;box-shadow:none">
+              <table class="data-table">
+                <thead><tr><th>Order #</th><th>Total</th><th>Items</th><th>Payment</th><th>Date</th></tr></thead>
+                <tbody>
+                  <template x-for="order in history" :key="order.order_id">
+                    <tr>
+                      <td style="font-family:'Courier New',monospace;font-weight:700;color:var(--c-brand)" x-text="`#${String(order.order_id).padStart(4,'0')}`"></td>
+                      <td style="font-weight:700" x-text="fmt.currency(order.total)"></td>
+                      <td x-text="order.items_count + ' items'"></td>
+                      <td style="text-transform:capitalize" x-text="order.payment_method.replace('_',' ')"></td>
+                      <td x-text="fmt.date(order.date)"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /page-content -->
+  </main>
+  <!-- /main-content -->
+
+  <!-- ─── CART DRAWER ──────────────────────────────────────────────── -->
+  <template x-teleport="body">
+    <div x-show="$store.app.cartOpen">
+      <div class="cart-drawer-overlay" @click="$store.app.cartOpen = false"></div>
+      <div class="cart-drawer" style="animation: slideInRight 0.35s cubic-bezier(0.34,1.56,0.64,1) both">
+        <div class="cart-drawer-header">
+          <h3>Shopping Cart <span style="font-size:1rem;color:var(--c-text-secondary)" x-text="`(${$store.app.cartCount} items)`"></span></h3>
+          <button class="btn btn-ghost btn-icon" @click="$store.app.cartOpen = false">✕</button>
+        </div>
+
+        <div class="cart-items-list">
+          <template x-if="$store.app.cartItems.length === 0">
+            <div class="empty-state">
+              <div class="empty-state-icon">🛒</div>
+              <h3>Your cart is empty</h3>
+              <p>Add products to begin a sale.</p>
+            </div>
+          </template>
+          <template x-for="item in $store.app.cartItems" :key="item.product.id">
+            <div class="cart-item">
+              <template x-if="item.product.image_url">
+                <img class="cart-item-image" :src="item.product.image_url" :alt="item.product.name" />
+              </template>
+              <template x-if="!item.product.image_url">
+                <div class="cart-item-image" style="display:flex;align-items:center;justify-content:center;background:var(--c-brand-light);font-size:1.5rem" x-text="fmt.categoryEmoji(item.product.category)"></div>
+              </template>
+              <div style="flex:1;min-width:0">
+                <div class="cart-item-name" x-text="item.product.name"></div>
+                <div style="font-size:.8125rem;color:var(--c-brand-dark);font-weight:600" x-text="fmt.currency(item.product.price * item.quantity)"></div>
+              </div>
+              <div class="qty-stepper">
+                <button class="qty-btn" @click="$store.app.updateCartQty(item.product.id, -1)">−</button>
+                <span class="qty-count" x-text="item.quantity"></span>
+                <button class="qty-btn" @click="$store.app.updateCartQty(item.product.id, 1)">+</button>
+              </div>
+              <button class="btn btn-ghost btn-icon btn-sm" @click="$store.app.removeFromCart(item.product.id)" style="color:var(--c-danger)">✕</button>
+            </div>
+          </template>
+        </div>
+
+        <div class="cart-footer" x-show="$store.app.cartItems.length > 0">
+          <div class="cart-totals">
+            <div class="cart-total-row"><span>Subtotal</span><span x-text="fmt.currency($store.app.cartSubtotal)"></span></div>
+            <div class="cart-total-row"><span>Tax (8%)</span><span x-text="fmt.currency($store.app.cartTax)"></span></div>
+            <div class="cart-total-row grand"><span>Total</span><span x-text="fmt.currency($store.app.cartTotal)"></span></div>
+          </div>
+          <button class="btn btn-primary btn-full btn-lg" @click="$store.app.cartOpen=false; $store.app.navigate('pos')">
+            Proceed to Checkout →
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ─── CHATBOT ──────────────────────────────────────────────────── -->
+  <div x-data="chatbotComponent()">
+    <button class="chatbot-trigger" @click="$store.app.chatOpen = !$store.app.chatOpen" id="chatbot-btn" :title="$store.app.chatOpen ? 'Close assistant' : 'Open FreshMart assistant'">
+      <template x-if="!$store.app.chatOpen">
+        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </template>
+      <template x-if="$store.app.chatOpen">
+        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </template>
+    </button>
+
+    <div class="chatbot-panel" x-show="$store.app.chatOpen" x-cloak>
+      <div style="padding:1rem;border-bottom:1px solid var(--c-border);background:linear-gradient(135deg,var(--c-brand),#00b87a);border-radius:24px 24px 0 0">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.125rem">🤖</div>
+          <div>
+            <div style="font-weight:700;color:white;font-size:.9375rem">FreshMart Assistant</div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.75)">Ask me anything</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages-list">
+        <template x-for="(msg, i) in messages" :key="i">
+          <div>
+            <div class="chat-msg" :class="msg.role" x-html="renderText(msg.text)"></div>
+            <!-- Product recommendations from chatbot -->
+            <div x-show="msg.products && msg.products.length > 0" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.375rem">
+              <template x-for="prod in (msg.products || [])" :key="prod.id">
+                <button class="btn btn-secondary btn-sm" style="font-size:.75rem" @click="Alpine.store('app').addToCart({id:prod.id,name:prod.name,price:prod.price,category:prod.category,image_url:prod.image_url,unit_of_measure:prod.unit||'unit'})" x-text="`+ ${prod.name} (${fmt.currency(prod.price)})`"></button>
+              </template>
+            </div>
+          </div>
+        </template>
+        <div x-show="loading" class="chat-msg assistant">
+          <span style="letter-spacing:.2em;animation:pulse-glow 1.2s infinite">•••</span>
+        </div>
+      </div>
+
+      <!-- Suggestions -->
+      <div x-show="suggestions.length > 0" style="padding:.75rem;display:flex;gap:.375rem;flex-wrap:wrap;border-top:1px solid var(--c-border-2)">
+        <template x-for="sug in suggestions" :key="sug">
+          <button class="btn btn-secondary btn-sm" style="font-size:.75rem" @click="sendMessage(sug)" x-text="sug"></button>
+        </template>
+      </div>
+
+      <div class="chat-input-row">
+        <input class="chat-input" x-model="inputText" @keydown="handleKeydown($event)" placeholder="Ask me anything…" id="chat-input" />
+        <button class="btn btn-primary btn-icon" @click="sendMessage()" :disabled="loading || !inputText.trim()" id="chat-send">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- /app-layout -->
+
+<script>
+  // Initialize scroll reveal on first load
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initScrollReveal, 300);
+  });
+</script>
+</body>
+</html>
