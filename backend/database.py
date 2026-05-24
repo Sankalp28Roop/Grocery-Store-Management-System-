@@ -18,26 +18,46 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 # ---------------------------------------------------------------------------
 
 BASE_DIR = Path(__file__).resolve().parent
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'grocery_store.db'}")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # ---------------------------------------------------------------------------
-# Engine — SQLite with WAL mode and foreign key enforcement
+# Engine Configuration — Dynamic PostgreSQL (Cloud) vs SQLite (Local Sandbox)
 # ---------------------------------------------------------------------------
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},  # Required for SQLite + FastAPI threads
-    echo=False,  # Set True for SQL debug output
-)
+if DATABASE_URL and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")):
+    # SQLAlchemy requires "postgresql://" instead of "postgres://"
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,  # Drop stale sockets immediately (crucial for Serverless Vercel)
+        echo=False,
+    )
+else:
+    # Fallback to local SQLite engine
+    DATABASE_URL = f"sqlite:///{BASE_DIR / 'grocery_store.db'}"
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},  # Required for SQLite + FastAPI threads
+        echo=False,
+    )
 
 
 @event.listens_for(engine, "connect")
 def _set_sqlite_pragmas(dbapi_connection, _connection_record) -> None:
-    """Enable WAL mode and foreign key support on every new connection."""
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON")
-    cursor.execute("PRAGMA journal_mode = WAL")
-    cursor.close()
+    """Enable WAL mode and foreign key support on SQLite connections only."""
+    try:
+        # Check connection type to ensure we only apply SQLite-specific pragmas
+        connection_type = str(type(dbapi_connection)).lower()
+        if "sqlite" in connection_type:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute("PRAGMA journal_mode = WAL")
+            cursor.close()
+    except Exception:
+        pass
+
 
 
 # ---------------------------------------------------------------------------
