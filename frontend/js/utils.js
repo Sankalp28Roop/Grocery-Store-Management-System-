@@ -3,7 +3,7 @@
  */
 
 // ─── API Client ──────────────────────────────────────────────────────────────
-const API_BASE = '';  // Same-origin since FastAPI serves both
+const API_BASE = window.location.port === '8000' || window.location.port === '' ? '' : 'http://127.0.0.1:8000';
 
 class ApiClient {
   constructor() {
