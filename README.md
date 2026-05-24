@@ -13,38 +13,38 @@
 
 FreshMart features a premium, Apple-inspired glassmorphic dashboard architecture with smooth interactive slides, responsive layouts, and rich hover states modeled after the high-end *Grocery Mania v2* storefront.
 
-### 🛒 High-Fidelity B2C Storefront
+### 🛒 image 4: Customer Storefront View
 Experience a stunning customer storefront featuring dynamic hero sliders, category scrolls, promotional deals, and real-time product catalogs—loaded purely from database records.
 
 <p align="center">
-  <img src="docs/assets/storefront.png" alt="FreshMart Customer Storefront" width="85%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);" />
+  <img src="docs/assets/customer_storefront.png" alt="FreshMart Customer Storefront" width="95%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);" />
 </p>
 
 ---
 
-### 📊 Comprehensive Management Dashboard
-An immersive, role-protected dashboard for admins and managers featuring live financial analytics, low-stock warnings, upcoming product expiry reports, and active cashier shifts.
+### 👑 image 1: Admin Dashboard View
+An immersive, role-protected dashboard for admins (such as Super-Admin `Sankalp Swarup`) featuring live financial analytics, low-stock warnings, upcoming product expiry reports, and active cashier shifts.
 
 <p align="center">
-  <img src="docs/assets/dashboard.png" alt="FreshMart Administrative Dashboard" width="85%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);" />
+  <img src="docs/assets/admin_dashboard.png" alt="FreshMart Administrative Dashboard" width="95%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);" />
 </p>
 
 ---
 
-### 💸 Dynamic Point of Sale (POS) Interface
-A high-performance cashier POS module supporting real-time weight scales, barcode/RFID lookups, loyalty credit redemptions, and immediate receipt printing.
+### 📈 image 2: Manager Analytics View
+Dedicated access panel for store managers with integrated high-fidelity charts detailing sales revenue trends, overall profits, daily order counts, and top performing products.
 
 <p align="center">
-  <img src="docs/assets/pos.png" alt="Point of Sale Cashier Terminal" width="85%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);" />
+  <img src="docs/assets/manager_analytics.png" alt="Manager Analytics & Profits Panel" width="95%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);" />
 </p>
 
 ---
 
-### 🥬 Responsive Hero Banner Arrow & Slider
-Perfectly responsive layout breakpoints isolate interactive arrows on the slider margins and prevent typography overlap across widescreen, tablet, and mobile displays.
+### 💸 image 3: Cashier Dashboard View
+A high-performance cashier operational dashboard supporting quick Point of Sale (POS) checkouts, real-time inventories status, low stock alarms, and customer cart registries.
 
 <p align="center">
-  <img src="docs/assets/slider.png" alt="Responsive Slider Arrow Isolation" width="85%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);" />
+  <img src="docs/assets/cashier_dashboard.png" alt="Cashier Operations Dashboard" width="95%" style="border-radius: 12px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);" />
 </p>
 
 ---
